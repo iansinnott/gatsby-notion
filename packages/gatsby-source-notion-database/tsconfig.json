@@ -1,12 +1,23 @@
 {
   "compilerOptions": {
-    "outDir": "./lib/",
+    "outDir": "./lib",
     "sourceMap": true,
+    "rootDir": "./src",
     "noImplicitAny": false,
     "module": "commonjs",
-    "target": "esnext",
+    "skipLibCheck": true,
+    "target": "es2017",
     "jsx": "react",
-    "lib": ["dom", "es2015", "es2017"]
+    "lib": [
+      "dom",
+      "es2015",
+      "es2017"
+    ]
   },
-  "include": ["./src/**/*"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
 }
