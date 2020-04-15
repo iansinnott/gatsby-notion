@@ -1,0 +1,7 @@
+{
+  "name": "gatsby-source-notion-database",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Ian Sinnott <ian@iansinnott.com>",
+  "license": "MIT"
+}
