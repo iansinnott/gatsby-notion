@@ -1,0 +1,23 @@
+{
+  "name": "gatsby-notion-example",
+  "version": "0.0.0",
+  "description": "An example of using Gatsby and Notion together",
+  "keywords": [
+    "gatsby",
+    "notion"
+  ],
+  "author": "Ian Sinnott <ian@iansinnott.com>",
+  "homepage": "",
+  "license": "MIT",
+  "main": "lib/gatsby-node.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  }
+}
