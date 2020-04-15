@@ -163,14 +163,15 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
     const stringContent = JSON.stringify(block.content);
     const node = {
       id: `notion-${createNodeId(block.id)}`,
-      properties: block.properties,
+      properties: Object.values(block.properties),
       parent: null,
       children: [],
+      content: block.content,
       internal: {
-        type: `MyNodeType`,
+        type: `NotionPage${pluginConfig.name}`,
         mediaType: `text/html`,
-        content: block.content,
-        contentDigest: stringContent,
+        content: stringContent,
+        contentDigest: 'FUCK' + Math.random(),
       },
     };
 
@@ -197,11 +198,6 @@ export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] 
   const { actions } = context;
   const { createTypes } = actions;
   const typeDefs = `
-    type NotionPage${pluginConfig.name}LinkedPage {
-      title: String!
-      pageId: String!
-    }
-
     type NotionPage${pluginConfig.name}Att {
       att: String!
       value: String
@@ -225,41 +221,17 @@ export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] 
       blockIds: [String!]
     }
 
-    type NotionPageImage${pluginConfig.name} implements Node {
-      imageUrl: String!
-      contentId: String!
-      pageId: String!
+    type NotionPageProperty {
+      name: String!
+      type: String!
+      pid: String!
+      value: [[String]]
     }
 
     type NotionPage${pluginConfig.name} implements Node {
-      pageId: String!
-      title: String!
-      indexPage: Int!
-      isDraft: Boolean!
-      slug: String!
-      excerpt: String!
-      pageIcon: String!
-      tags: [String!]
-      createdAt: Date @dateformat
-      blocks: [NotionPage${pluginConfig.name}Block!]
-      imageNodeIds: [String!]
-      linkedPages: [NotionPage${pluginConfig.name}LinkedPage!]
-    }
-
-    type NotionPageCollectionSchema {
       id: String!
-      name: String!
-      type: String!
-    }
-
-    type NotionPageCollection {
-      id: String!
-      version: Int!
-      name: [String!]
-      schema: [NotionPageCollectionSchema]!
-      parent_id: String!
-      parent_table: String!
-      alive: Boolean!
+      properties: [NotionPageProperty]
+      content: [NotionPage${pluginConfig.name}Block!]
     }
   `;
   createTypes(typeDefs);
