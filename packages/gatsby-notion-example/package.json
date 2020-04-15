@@ -20,15 +20,13 @@
   "main": "n/a",
   "scripts": {
     "build": "gatsby build",
-    "develop": "gatsby develop",
+    "develop": "yarn run start",
+    "start": "gatsby develop",
+    "inspect": "node --nolazy --inspect-brk node_modules/gatsby/dist/bin/gatsby develop",
     "format": "prettier --parser typescript --trailing-comma es5 --double-quote --write \"src/**/*.ts*\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
     "prettier": "^1.8.2"
-  },
-  "contributors": [
-    "fabien0102 <fabien0102@gmail.com>",
-    "Hays Clark <hays.clark@gmail.com>"
-  ]
+  }
 }
