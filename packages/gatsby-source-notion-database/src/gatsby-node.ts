@@ -102,9 +102,32 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
         .map((id) => raw.recordMap.block[id].value)
         .map((x) => {
           const content = x.content
-            ? x.content.map((id) => raw.recordMap.block[id]).map((y) => y.value)
+            ? x.content
+                .filter((id) => {
+                  const isBlockMapped = Boolean(raw.recordMap.block[id]);
+                  if (!isBlockMapped) {
+                    reporter.warn(
+                      `gatsby-source-notion-database No body block found for ID ${id}. Skipping this block. If you think this is a mistake try viewing the content of page: ${x.id}`,
+                    );
+                  }
+                  return isBlockMapped;
+                })
+                .map((id) => raw.recordMap.block[id])
+                .map((y) => {
+                  return y.value;
+                })
             : undefined;
           const properties = Object.entries(x.properties)
+            .filter(([pid, value]) => {
+              const inSchema = schema[pid];
+              if (!inSchema) {
+                reporter.warn(
+                  `gatsby-source-notion-database No property mapping found for PID ${pid}. Skipping property. If you think this is a mistake try viewing the content of page: ${x.id}`,
+                );
+              }
+
+              return inSchema;
+            })
             .map(([pid, value]) => {
               const { name, type } = schema[pid];
               return {
@@ -118,12 +141,13 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
 
           return {
             ...x,
+            _notionId: x.id,
             properties,
             content,
           };
         });
 
-      return blocks;
+      return { blocks, collection, collectionView };
     });
   };
 
@@ -156,22 +180,34 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   );
   reporter.info(`gatsby-source-notion-database URL: ${databaseViewUrl}`);
 
-  const blocks = await queryCollection({ pageId, collectionViewId });
+  const {
+    blocks,
+    collection: { schema },
+  } = await queryCollection({ pageId, collectionViewId });
 
-  debugger;
+  const NODE_TYPE = `NotionDatabaseRow__${pluginConfig.name}`;
+
+  // const rawProperties = Object.entries()
+
+  // actions.createTypes(`
+  //   type ${NODE_TYPE} implements Node {
+  //   }
+  // `);
+
   for (const block of blocks) {
     const stringContent = JSON.stringify(block.content);
     const node = {
       id: `notion-${createNodeId(block.id)}`,
-      properties: Object.values(block.properties),
+      properties: block.properties,
+      rawProperties: Object.values(block.properties),
       parent: null,
       children: [],
       content: block.content,
       internal: {
-        type: `NotionPage${pluginConfig.name}`,
+        type: NODE_TYPE,
         mediaType: `text/html`,
         content: stringContent,
-        contentDigest: 'FUCK' + Math.random(),
+        contentDigest: createContentDigest({ data: stringContent }),
       },
     };
 
@@ -182,6 +218,22 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
 
     actions.createNode(node);
   }
+
+  const outputSchema = Object.entries(schema).map(([pid, value]) => {
+    // @ts-ignore
+    return { pid, ...value };
+  });
+  const stringSchema = JSON.stringify(outputSchema);
+  actions.createNode({
+    id: `notionSchema-${createNodeId(NODE_TYPE + 'SCHEMA')}`,
+    properties: outputSchema,
+    internal: {
+      type: NODE_TYPE + 'SCHEMA',
+      mediaType: `application/json`,
+      content: stringSchema,
+      contentDigest: createContentDigest({ data: stringSchema }),
+    },
+  });
 };
 
 const extractGuids = (url: string) => {
@@ -191,48 +243,13 @@ const extractGuids = (url: string) => {
   return { pageId: a, collectionViewId: b };
 };
 
-export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] = async (
-  context: CreateSchemaCustomizationArgs,
-  pluginConfig: NotionDatabasePluginOptions,
-): Promise<void> => {
-  const { actions } = context;
-  const { createTypes } = actions;
-  const typeDefs = `
-    type NotionPage${pluginConfig.name}Att {
-      att: String!
-      value: String
-    }
-
-    type NotionPage${pluginConfig.name}Text {
-      text: String!
-      atts: [NotionPage${pluginConfig.name}Att!]
-    }
-
-    type NotionPage${pluginConfig.name}Property {
-      propName: String!
-      value: [NotionPage${pluginConfig.name}Text!]
-    }
-
-    type NotionPage${pluginConfig.name}Block {
-      type: String!
-      blockId: String!
-      properties: [NotionPage${pluginConfig.name}Property!]
-      attributes: [NotionPage${pluginConfig.name}Att!]
-      blockIds: [String!]
-    }
-
-    type NotionPageProperty {
-      name: String!
-      type: String!
-      pid: String!
-      value: [[String]]
-    }
-
-    type NotionPage${pluginConfig.name} implements Node {
-      id: String!
-      properties: [NotionPageProperty]
-      content: [NotionPage${pluginConfig.name}Block!]
-    }
-  `;
-  createTypes(typeDefs);
-};
+// export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] = async (
+//   context: CreateSchemaCustomizationArgs,
+//   pluginConfig: NotionDatabasePluginOptions,
+// ): Promise<void> => {
+//   const { actions } = context;
+//   const { createTypes } = actions;
+//   const typeDefs = `
+//   `;
+//   createTypes(typeDefs);
+// };
