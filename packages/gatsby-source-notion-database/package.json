@@ -1,0 +1,25 @@
+{
+  "name": "gatsby-source-notion-database",
+  "version": "0.0.0",
+  "description": "Use Notion database views as a Gatsby data source",
+  "keywords": [
+    "gatsby",
+    "notion",
+    "database",
+    "cms"
+  ],
+  "author": "Ian Sinnott <ian@iansinnott.com>",
+  "homepage": "",
+  "license": "MIT",
+  "main": "lib/gatsby-node.js",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  }
+}
