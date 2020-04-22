@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import {
   NotionsoPluginOptions,
   NotionPropertyValue,
@@ -265,11 +266,25 @@ const createNodesFromCollection = async (
           };
         });
 
-      return {
+      const result = {
         blocks,
         collection,
         collectionView,
       };
+
+      if (debug) {
+        const outfile = '/tmp/fetched-and-mapped.json';
+        reporter.info(`Writing debug file output to: ${outfile}`);
+        try {
+          fs.writeFileSync(outfile, JSON.stringify(result, null, 2), {
+            encoding: 'utf8',
+          });
+        } catch (err) {
+          reporter.info(`Could not write to ${outfile}`);
+        }
+      }
+
+      return result;
     });
   };
 
@@ -327,8 +342,6 @@ const createNodesFromCollection = async (
           reporter.warn(`[RENDER ERROR] ${err.message}`);
         }
       });
-
-      reporter.info(`rendered output: ${JSON.stringify(renderedContent)}`);
     }
 
     const node = {
@@ -343,10 +356,10 @@ const createNodesFromCollection = async (
       },
     };
 
-    if (debug) {
-      reporter.info(`Adding node`);
-      prettyPrint(node);
-    }
+    // if (debug) {
+    //   reporter.info(`Adding node`);
+    //   prettyPrint(node);
+    // }
 
     context.actions.createNode(node);
   }
