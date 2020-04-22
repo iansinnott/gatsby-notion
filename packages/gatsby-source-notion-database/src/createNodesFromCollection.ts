@@ -10,6 +10,7 @@ import { SourceNodesArgs, Reporter } from 'gatsby';
 import { createAgent } from 'notionapi-agent';
 import { inspect } from 'util';
 import mapIntermediateContentRepresentation from './mapIntermediateContentRepresentation';
+import { NOTION_NODE_PREFIX } from './helpers';
 
 const mapNotionPropertyValue = ({
   type,
@@ -277,7 +278,7 @@ const createNodesFromCollection = async (
   prettyPrint(blocks);
   prettyPrint(collection);
 
-  const NODE_TYPE = `NotionCollectionNode${formattedCollectionName}`;
+  const NODE_TYPE = NOTION_NODE_PREFIX + formattedCollectionName;
 
   // context.actions.createTypes(`
   //   type ${NODE_TYPE}RenderedOutput {
