@@ -11,7 +11,7 @@ import { SourceNodesArgs, Reporter } from 'gatsby';
 import { createAgent } from 'notionapi-agent';
 import { inspect } from 'util';
 import mapIntermediateContentRepresentation from './mapIntermediateContentRepresentation';
-import { NOTION_NODE_PREFIX } from './helpers';
+import { NOTION_NODE_PREFIX, tap } from './helpers';
 
 const mapNotionPropertyValue = ({
   type,
@@ -180,12 +180,91 @@ const createNodesFromCollection = async (
       prettyPrint(queryArgs);
     }
 
-    return notion.queryCollection(queryArgs).then((raw) => {
+    const fetchContent = async (
+      ids: string[],
+      blockMap: { [k: string]: any },
+    ) => {
+      // Just to avoid odd situations
+      if (ids.length === 0) return ids;
+
+      if (ids.some((x) => typeof x !== 'string')) {
+        throw new Error('Must pass an id of strings to fetch content');
+      }
+
+      const preMapped = ids
+        .filter((id) => blockMap[id])
+        .map((id) => blockMap[id].value);
+
+      // All fetched already, nothing to see here
+      if (preMapped.length === ids.length) {
+        return preMapped;
+      }
+
+      const requests = ids.map((id) => ({ table: 'block' as 'block', id }));
+
+      const records = notion.getRecordValues({
+        requests,
+      });
+
+      return (await records).results
+        .map((x) => x.value)
+        .map((x) => {
+          if ('id' in x) {
+            blockMap[x.id] = x;
+          }
+          return x;
+        });
+    };
+
+    const getContentForBlocks = async (blocks, blockMap) => {
+      const result = [];
+      debugger;
+      for (const b of blocks) {
+        // Defend against empty rows in collections. Notion does not even include a properties object for these rows
+        if (!b.properties) {
+          reporter.warn(
+            `No properties found for CONTENT block ${b.id} of type ${b.type}. Most likely this is a newline`,
+          );
+          if (b.type === 'text') {
+            result.push({
+              ...b,
+              type: 'newline',
+              properties: {
+                title: [['\n']],
+              },
+            });
+          }
+          continue;
+        }
+
+        // The node may already have content fetched, in which case it will be an array of objects. Do not fetch if this is the case.
+        if (b.content) {
+          const fetched = b.content.every((x) => typeof x === 'string')
+            ? await fetchContent(b.content, blockMap)
+            : b.content;
+          result.push({
+            ...b,
+            // Recurse
+            content: await getContentForBlocks(fetched, blockMap),
+          });
+        } else {
+          result.push(b);
+        }
+      }
+
+      debugger;
+
+      return result;
+    };
+
+    return notion.queryCollection(queryArgs).then(async (raw) => {
       const { schema } = collection;
       const missingContentBlocks = [];
-      const blocks = raw.result.blockIds
+      const blockMap = raw.recordMap.block;
+
+      const rows = raw.result.blockIds
         .map((id) => {
-          const x = raw.recordMap.block[id].value as CollectionBlock;
+          const x = blockMap[id].value as CollectionBlock;
 
           if (!x) {
             reporter.info(
@@ -196,30 +275,29 @@ const createNodesFromCollection = async (
           return x;
         })
         .filter(notEmpty)
-        .filter((x) => {
-          // Defend against empty rows in collections. Notion does not even include a properties object for these rows
-          if (!x.properties) {
-            reporter.warn(
-              `No properties found for block ${x.id}. Most likely this is an empty row`,
-            );
-          }
-
-          return x.properties;
-        })
+        .map(
+          tap((x) => {
+            if (!x.properties) {
+              reporter.warn(
+                `No properties found for ROW block ${x.id} of type ${x.type}. Most likely this is an empty row`,
+              );
+            }
+          }),
+        )
+        .filter((x) => x.properties)
         .map((x) => {
           const content = x.content
             ? x.content
                 .filter((id) => {
-                  const isBlockMapped = Boolean(raw.recordMap.block[id]);
+                  const isBlockMapped = Boolean(blockMap[id]);
                   if (!isBlockMapped) {
                     reporter.warn(
                       `No body block found for ID ${id}. Skipping this block. If you think this is a mistake try viewing the content of page: ${x.id}`,
                     );
-                    missingContentBlocks.push(id);
                   }
                   return isBlockMapped;
                 })
-                .map((id) => raw.recordMap.block[id])
+                .map((id) => blockMap[id])
                 .map((y) => {
                   return y.value;
                 })
@@ -241,6 +319,7 @@ const createNodesFromCollection = async (
               const { name, type } = schema[pid];
               return {
                 pid,
+                // @ts-ignore
                 value: mapNotionPropertyValue({ type, value }),
                 _raw: JSON.stringify(value),
                 name,
@@ -267,6 +346,8 @@ const createNodesFromCollection = async (
             content,
           };
         });
+
+      const blocks = await getContentForBlocks(rows, blockMap);
 
       /**
        * ------------------------------------------------------------------------------------------------
