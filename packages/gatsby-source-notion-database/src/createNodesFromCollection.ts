@@ -1,27 +1,13 @@
-import { NotionsoPluginOptions, NotionPageProperty } from './types';
+import {
+  NotionsoPluginOptions,
+  NotionPropertyValue,
+  DateObject,
+  CollectionBlock,
+  PropertyDetails,
+} from './types';
 import { SourceNodesArgs, Reporter } from 'gatsby';
 import { createAgent } from 'notionapi-agent';
 import { inspect } from 'util';
-import { Block } from 'notionapi-agent/dist/interfaces';
-
-type NotionPropertyValue = Array<[string, any?]>;
-
-interface PropertyDetails {
-  pid: string;
-  value: string;
-  _raw: string;
-  name: string;
-  type: string;
-}
-
-type CollectionBlock = Block & {
-  properties: { [k: string]: NotionPropertyValue };
-};
-
-interface DateObject {
-  type: 'date';
-  start_date: string;
-}
 
 const mapNotionPropertyValue = ({
   type,

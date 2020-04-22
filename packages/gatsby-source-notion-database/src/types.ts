@@ -4,11 +4,11 @@ import { BasicBlockUnion } from 'notionapi-agent/dist/interfaces/notion-models/b
 import { MediaBlockUnion } from 'notionapi-agent/dist/interfaces/notion-models/block/media';
 import { SemanticString } from 'notionapi-agent/dist/interfaces';
 
-type NotionPropertyValue = Array<[string, any?]>;
+export type NotionPropertyValue = Array<[string, any?]>;
 
-type NotionBlock = BasicBlockUnion | MediaBlockUnion;
+export type NotionBlock = BasicBlockUnion | MediaBlockUnion;
 
-interface PropertyDetails {
+export interface PropertyDetails {
   pid: string;
   value: string;
   _raw: string;
@@ -16,11 +16,11 @@ interface PropertyDetails {
   type: string;
 }
 
-type CollectionBlock = Block & {
+export type CollectionBlock = Block & {
   properties: { [k: string]: NotionPropertyValue };
 };
 
-interface DateObject {
+export interface DateObject {
   type: 'date';
   start_date: string;
 }
@@ -132,35 +132,7 @@ export interface BlockType {
   version: number;
   type: string;
   properties: { [k: string]: any };
-  content?: {
-    id: string;
-    version: number;
-    type: string;
-    properties: {
-      title?: (string | string[][])[][];
-      language?: string[][];
-      source?: string[][];
-      caption?: (string | string[][])[][];
-    };
-    created_time: number;
-    last_edited_time: number;
-    parent_id: string;
-    parent_table: string;
-    alive: boolean;
-    created_by_table: string;
-    created_by_id: string;
-    last_edited_by_table: string;
-    last_edited_by_id: string;
-    format?: {
-      block_width: number;
-      display_source: string;
-      block_full_width: boolean;
-      block_page_width: boolean;
-      block_aspect_ratio: number;
-      block_preserve_scale: boolean;
-    };
-    file_ids?: string[];
-  }[];
+  content?: NotionBlock[];
   created_time: number;
   last_edited_time: number;
   parent_id: string;
