@@ -182,6 +182,7 @@ const createNodesFromCollection = async (
 
     return notion.queryCollection(queryArgs).then((raw) => {
       const { schema } = collection;
+      const missingContentBlocks = [];
       const blocks = raw.result.blockIds
         .map((id) => {
           const x = raw.recordMap.block[id].value as CollectionBlock;
@@ -214,6 +215,7 @@ const createNodesFromCollection = async (
                     reporter.warn(
                       `No body block found for ID ${id}. Skipping this block. If you think this is a mistake try viewing the content of page: ${x.id}`,
                     );
+                    missingContentBlocks.push(id);
                   }
                   return isBlockMapped;
                 })
@@ -266,7 +268,26 @@ const createNodesFromCollection = async (
           };
         });
 
+      /**
+       * ------------------------------------------------------------------------------------------------
+       * ------------------------------------------------------------------------------------------------
+       * This needs work:
+       * I didn't realize before but the data structure is not actually flat.
+       * For nested lists, at the very least, there's a lot more going on. Each
+       * bulleted_list can have a content property which will be an array of ids.
+       * I think the best approach is to first do a revursive run through of
+       * the data, grab all content ids, then collect the ones that are not
+       * included in the already-fetched record map and fetch them all using
+       * getRecordValues. Only at that point, once all have been fetched, can I
+       * match ids to values in the nested data structure (also needs to be done
+       * recursively)
+       * ------------------------------------------------------------------------------------------------
+       * ------------------------------------------------------------------------------------------------
+       */
+
       const result = {
+        raw,
+        missingContentBlocks,
         blocks,
         collection,
         collectionView,
