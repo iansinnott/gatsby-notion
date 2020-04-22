@@ -194,6 +194,16 @@ const createNodesFromCollection = async (
           return x;
         })
         .filter(notEmpty)
+        .filter((x) => {
+          // Defend against empty rows in collections. Notion does not even include a properties object for these rows
+          if (!x.properties) {
+            reporter.warn(
+              `No properties found for block ${x.id}. Most likely this is an empty row`,
+            );
+          }
+
+          return x.properties;
+        })
         .map((x) => {
           const content = x.content
             ? x.content
