@@ -130,7 +130,7 @@ const createNodesFromCollection = async (
   const loadPageChunk = (id: string) => {
     const data = {
       pageId: id,
-      limit: 100000,
+      limit: 70 * 14,
       cursor: { stack: [] },
       chunkNumber: 0,
       verticalColumns: false,
@@ -163,7 +163,7 @@ const createNodesFromCollection = async (
       collectionId: collection.id,
       collectionViewId,
       loader: {
-        limit: 70,
+        limit: 70 * 14,
         loadContentCover: true,
         // @ts-ignore
         searchQuery: '',
@@ -216,6 +216,7 @@ const createNodesFromCollection = async (
         });
     };
 
+    // recursive logic works.... but not all node ids are returned in the initial raw data. Hm.
     const getContentForBlocks = async (blocks, blockMap) => {
       const result = [];
       debugger;

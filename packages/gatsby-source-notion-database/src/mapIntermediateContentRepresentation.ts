@@ -34,7 +34,7 @@ const mapContent = (content: Array<NotionContentBlock> | undefined) => {
     return [];
   }
 
-  return content.map((y: NotionContentBlock) => {
+  return content.map((y) => {
     switch (y.type) {
       case 'header':
       case 'text': {
@@ -65,7 +65,16 @@ const mapContent = (content: Array<NotionContentBlock> | undefined) => {
         };
       }
       case 'bulleted_list':
-      case 'numbered_list':
+      case 'numbered_list': {
+        return {
+          type: y.type,
+          children: [
+            ...makeInlineChildren(y.properties.title),
+            // @ts-ignore Not sure how to get around this. I want to use the existing types to redefined a new one where content is recursively more nodes
+            ...mapContent(y.content),
+          ],
+        };
+      }
       default:
         return {
           type: y.type,
