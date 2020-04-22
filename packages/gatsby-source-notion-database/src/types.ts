@@ -1,20 +1,21 @@
 import { PluginOptions } from 'gatsby';
 
-export interface NotionDatabasePluginOptions extends PluginOptions {
-  name: string;
-  databaseViewUrl: string;
-  debug?: boolean;
-  token?: string;
+export interface NotionMeta {
+  slug?: string;
+  date?: string;
+  tags?: string[];
+  isDraft?: boolean;
+  excerpt?: string;
 }
 
-export interface NotionPageAttribute {
+export interface NotionPageAtt {
   att: string;
   value?: string;
 }
 
 export interface NotionPageText {
   text: string;
-  atts: NotionPageAttribute[];
+  atts: NotionPageAtt[];
 }
 
 export interface NotionPageProperty {
@@ -26,66 +27,8 @@ export interface NotionPageBlock {
   type: string;
   blockId: string;
   properties: NotionPageProperty[];
-  attributes: NotionPageAttribute[];
+  attributes: NotionPageAtt[];
   blockIds: string[];
-  collectionViews?: CollectionViewMap[];
-}
-
-export interface Aggregate {
-  property: string;
-  type: string;
-  aggregation_type: string;
-  id: 'count' | string;
-  view_type: string;
-}
-
-export interface Aggregate2 {
-  property: string;
-  aggregator: string;
-}
-export interface Query2 {
-  aggregate: Aggregate[];
-  aggregations: Aggregate2[];
-  filter: {
-    filters: any[];
-    operator: string;
-  };
-  sort: any[];
-}
-
-export type NotionCollectionSchema = {
-  [k: string]: {
-    name: string;
-    type: string;
-    options: any[];
-  };
-};
-
-// Not well typed yet
-export type NotionCollectionFormat = { [k: string]: any };
-
-export interface NotionCollection {
-  id: string;
-  version: number;
-  name: string[];
-  schema: NotionCollectionSchema;
-  format: NotionCollectionFormat;
-  parent_id: string;
-  parent_table: 'block';
-  alive: boolean;
-}
-
-export interface NotionCollectionView {
-  id: string;
-  version: number;
-  type: string; // Is actually any enum: "list" | "table" | ... others I don't know about
-  name: string;
-  format: NotionCollectionFormat;
-  parent_id: string;
-  parent_table: 'block';
-  alive: boolean;
-  page_sort?: string[]; // A string of ids, not always defined though...
-  query2: Query2;
 }
 
 export interface NotionPageImage {
@@ -103,6 +46,7 @@ export interface NotionImageNodes {
 }
 
 export interface NotionPageLinkedPage {
+  title: string;
   pageId: string;
 }
 
@@ -119,8 +63,6 @@ export interface NotionPageDescription {
   blocks: NotionPageBlock[];
   images: NotionPageImage[];
   linkedPages: NotionPageLinkedPage[];
-  properties: NotionPageProperty[];
-  collectionViews?: CollectionViewMap[];
 }
 
 // generic type to hold json data
@@ -129,6 +71,15 @@ export interface Json {
   [x: string]: JsonTypes;
 }
 export type JsonArray = Array<JsonTypes>;
+
+// plugin configuration data
+export interface NotionsoPluginOptions extends PluginOptions {
+  databaseViewUrl: string;
+  name: string;
+  tokenv2?: string;
+  downloadLocal: boolean;
+  debug?: boolean;
+}
 
 export interface NotionLoaderImageInformation {
   imageUrl: string;
@@ -141,16 +92,8 @@ export interface NotionLoaderImageResult {
   signedImageUrl: string;
 }
 
-export type Collections = { [k: string]: NotionCollection };
-export type CollectionViews = { [k: string]: NotionCollectionView };
-export interface CollectionViewMap {
-  collection: NotionCollection;
-  collectionView: NotionCollectionView;
-}
-
 export interface NotionLoader {
   loadPage(pageId: string): Promise<void>;
-  getCollectionViews(): CollectionViewMap[];
   downloadImages(
     images: NotionLoaderImageInformation[],
   ): Promise<NotionLoaderImageResult[]>;
