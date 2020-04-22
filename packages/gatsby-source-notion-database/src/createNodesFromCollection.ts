@@ -4,10 +4,12 @@ import {
   DateObject,
   CollectionBlock,
   PropertyDetails,
+  NotionContentBlock,
 } from './types';
 import { SourceNodesArgs, Reporter } from 'gatsby';
 import { createAgent } from 'notionapi-agent';
 import { inspect } from 'util';
+import mapIntermediateContentRepresentation from './mapIntermediateContentRepresentation';
 
 const mapNotionPropertyValue = ({
   type,
@@ -252,7 +254,11 @@ const createNodesFromCollection = async (
           };
         });
 
-      return { blocks, collection, collectionView };
+      return {
+        blocks,
+        collection,
+        collectionView,
+      };
     });
   };
 
@@ -273,34 +279,65 @@ const createNodesFromCollection = async (
 
   const NODE_TYPE = `NotionCollectionNode${formattedCollectionName}`;
 
-  context.actions.createTypes(`
-    type ${NODE_TYPE} implements Node {
-      version: Int
-      type: String!
-      created_time: Int
-      last_edited_time: Int
-      parent_id: String
-      parent_table: String
-      alive: Boolean
-      created_by_table: String
-      created_by_id: String
-      last_edited_by_table: String
-      last_edited_by_id: String
-      _notionBlockId: String!
-    }
-  `);
+  // context.actions.createTypes(`
+  //   type ${NODE_TYPE}RenderedOutput {
+  //     html: String!
+  //   }
+  //   type ${NODE_TYPE} implements Node {
+  //     version: Int
+  //     type: String!
+  //     created_time: Int
+  //     last_edited_time: Int
+  //     parent_id: String
+  //     parent_table: String
+  //     alive: Boolean
+  //     created_by_table: String
+  //     created_by_id: String
+  //     last_edited_by_table: String
+  //     last_edited_by_id: String
+  //     rendered: ${NODE_TYPE}RenderedOutput
+  //     _notionBlockId: String!
+  //   }
+  // `);
 
-  for (const block of blocks) {
-    context.actions.createNode({
+  // @ts-ignore
+  for (const block of blocks.map(mapIntermediateContentRepresentation)) {
+    let renderedContent = {};
+
+    if (config.renderers) {
+      Object.entries(config.renderers).forEach(([k, render]) => {
+        try {
+          // @ts-ignore
+          renderedContent[k] = render(block);
+        } catch (err) {
+          reporter.warn(
+            `[RENDER ERROR] Additional renderer supplied for key "${k}" threw an error while rendering. See next line:`,
+          );
+          reporter.warn(`[RENDER ERROR] ${err.message}`);
+        }
+      });
+
+      reporter.info(`rendered output: ${JSON.stringify(renderedContent)}`);
+    }
+
+    const node = {
       ...block,
       id: context.createNodeId(block.id),
+      rendered: renderedContent,
       internal: {
         type: NODE_TYPE,
         contentDigest: context.createContentDigest({
           data: JSON.stringify(block.content),
         }),
       },
-    });
+    };
+
+    if (debug) {
+      reporter.info(`Adding node`);
+      prettyPrint(node);
+    }
+
+    context.actions.createNode(node);
   }
 };
 

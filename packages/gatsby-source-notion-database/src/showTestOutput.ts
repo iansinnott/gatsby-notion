@@ -281,7 +281,7 @@ const parseBlockNodes = (xs: BlockType[]): object => {
   return xs.map(mapIntermediateContentRepresentation).map((x) => {
     return {
       ...x,
-      html: renderToHtml(x),
+      html: renderToHtml()(x),
     };
   });
 };

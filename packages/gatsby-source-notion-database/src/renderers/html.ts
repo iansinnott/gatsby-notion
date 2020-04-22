@@ -1,7 +1,7 @@
 import { IntermediateForm, Unpacked } from '../types';
 import { map, pipe, join } from '../helpers';
 
-const renderToHtml = (x: IntermediateForm) => {
+const renderToHtml = () => (x: IntermediateForm) => {
   const mapInline = (y: {
     text: string;
     attributes: Array<{ type: string; meta?: any }>;

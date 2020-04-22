@@ -1,5 +1,5 @@
 import { SemanticString } from 'notionapi-agent/dist/interfaces';
-import { BlockType, NotionBlock } from './types';
+import { BlockType, NotionContentBlock } from './types';
 
 export const notEmpty = <T>(value: T | null | undefined): value is T => {
   return value !== null && value !== undefined;
@@ -16,7 +16,6 @@ const makeInlineChildren = (titleProp: SemanticString[] | undefined) => {
     // prettier-ignore
     // @ts-ignore
     const attributes = !attrs ? [] : attrs.map(([typ, meta]) => ({ type: typ, meta }));
-    debugger;
     return {
       text: str,
       attributes,
@@ -30,12 +29,12 @@ const valueFromArray = (arr: any[] | undefined) => {
   return arr.flat().join('');
 };
 
-const mapContent = (content: Array<NotionBlock> | undefined) => {
+const mapContent = (content: Array<NotionContentBlock> | undefined) => {
   if (!content) {
     return [];
   }
 
-  return content.map((y: NotionBlock) => {
+  return content.map((y: NotionContentBlock) => {
     switch (y.type) {
       case 'header':
       case 'text': {

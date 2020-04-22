@@ -3,10 +3,11 @@ import { Block } from 'notionapi-agent/dist/interfaces';
 import { BasicBlockUnion } from 'notionapi-agent/dist/interfaces/notion-models/block/basic_block';
 import { MediaBlockUnion } from 'notionapi-agent/dist/interfaces/notion-models/block/media';
 import { SemanticString } from 'notionapi-agent/dist/interfaces';
+import { IntermediateForm } from './mapIntermediateContentRepresentation';
 
 export type NotionPropertyValue = Array<[string, any?]>;
 
-export type NotionBlock = BasicBlockUnion | MediaBlockUnion;
+export type NotionContentBlock = BasicBlockUnion | MediaBlockUnion;
 
 export interface PropertyDetails {
   pid: string;
@@ -104,6 +105,7 @@ export interface NotionsoPluginOptions extends PluginOptions {
   tokenv2?: string;
   downloadLocal: boolean;
   debug?: boolean;
+  renderers?: { [k: string]: (x: IntermediateForm) => any };
 }
 
 export interface NotionLoaderImageInformation {
@@ -132,7 +134,7 @@ export interface BlockType {
   version: number;
   type: string;
   properties: { [k: string]: any };
-  content?: NotionBlock[];
+  content?: NotionContentBlock[];
   created_time: number;
   last_edited_time: number;
   parent_id: string;
@@ -146,6 +148,6 @@ export interface BlockType {
   _propertyDetails: { [k: string]: PropertyDetails };
 }
 
-export { IntermediateForm } from './mapIntermediateContentRepresentation';
+export { IntermediateForm };
 
 export type Unpacked<T> = T extends (infer U)[] ? U : T;
