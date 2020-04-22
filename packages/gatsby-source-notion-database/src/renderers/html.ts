@@ -48,14 +48,18 @@ const renderToHtml = () => (x: IntermediateForm) => {
         return `<pre>${buildInline(child.children)}</pre>`;
       case 'newline':
         return ``;
+      case 'bulleted_list':
+        return `<ul><li>${buildHtml(child.children)}</li></ul>`;
       case 'image':
-        const alt = child.captionString || '';
-        const figcaption = child.caption ? buildInline(child.caption) : '';
+        const alt = child.props.captionString || '';
+        const figcaption = child.props.caption
+          ? buildInline(child.props.caption)
+          : '';
         return !alt
-          ? `<img src="${child.src}" />`
+          ? `<img src="${child.props.src}" />`
           : join('')([
               `<figure>`,
-              `<img src="${child.src}" alt="${alt}"/>`,
+              `<img src="${child.props.src}" alt="${alt}"/>`,
               `<figcaption>${figcaption}</figcaption>`,
               `</figure>`,
             ]);

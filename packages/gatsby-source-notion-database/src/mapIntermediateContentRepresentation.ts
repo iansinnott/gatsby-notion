@@ -29,60 +29,83 @@ const valueFromArray = (arr: any[] | undefined) => {
   return arr.flat().join('');
 };
 
-const mapContent = (content: Array<NotionContentBlock> | undefined) => {
+// These types were not working, but the real return type is basically an array of this
+// export interface IntermediateForm {
+//   type: string;
+//   children: Array<ReturnType<typeof makeInlineChildren> | IntermediateForm>;
+//   props?: { [k:string]: any }
+// }
+
+const mapContent = (
+  content: Array<NotionContentBlock | string> | undefined,
+) => {
   if (!content) {
     return [];
   }
 
-  return content.map((y) => {
-    switch (y.type) {
-      case 'header':
-      case 'text': {
-        const result = makeInlineChildren(y.properties?.title);
-        // What does it mean when this is undefined? An empty line?
-        return result
-          ? { type: y.type, children: result }
-          : { type: 'newline', children: [] };
-      }
-      case 'code': {
-        return {
-          type: y.type,
-          children: makeInlineChildren(y.properties?.title),
-          // @ts-ignore
-          language: valueFromArray(y.properties?.language),
-        };
-      }
-      case 'image': {
-        return {
-          type: y.type,
-          children: [],
-          // NOTE: The `source` property does indeed include an s3 image URL, but it's not accessible directly
-          src: `https://www.notion.so/image/${encodeURIComponent(
-            valueFromArray(y.properties?.source),
-          )}`,
-          caption: makeInlineChildren(y.properties?.caption),
-          captionString: valueFromArray(y.properties?.caption),
-        };
-      }
-      case 'bulleted_list':
-      case 'numbered_list': {
-        return {
-          type: y.type,
-          children: [
-            ...makeInlineChildren(y.properties.title),
-            // @ts-ignore Not sure how to get around this. I want to use the existing types to redefined a new one where content is recursively more nodes
-            ...mapContent(y.content),
-          ],
-        };
-      }
-      default:
-        return {
-          type: y.type,
-          // @ts-ignore
-          children: [{ properties: y?.properties }],
-        };
-    }
-  });
+  return (
+    content
+      // This silliness is just to get around some typing issues with the
+      // recursion... We never want to call this with strings but the types imported
+      // from elsewhere thing strings are what we get
+      .filter(<T>(y: T | string): y is T => {
+        return typeof y !== 'string';
+      })
+      .map((y) => {
+        switch (y.type) {
+          case 'header':
+          case 'text': {
+            const result = makeInlineChildren(y.properties?.title);
+            // What does it mean when this is undefined? An empty line?
+            return result
+              ? { type: y.type, children: result }
+              : { type: 'newline', children: [] };
+          }
+          // @ts-ignore Not an official type
+          case 'newline':
+            return { type: 'newline', children: [] };
+          case 'code': {
+            return {
+              type: y.type,
+              children: makeInlineChildren(y.properties?.title),
+              props: {
+                language: valueFromArray(y.properties?.language),
+              },
+            };
+          }
+          case 'image': {
+            return {
+              type: y.type,
+              children: [],
+              props: {
+                // NOTE: The `source` property does indeed include an s3 image URL, but it's not accessible directly
+                src: `https://www.notion.so/image/${encodeURIComponent(
+                  valueFromArray(y.properties?.source),
+                )}`,
+                caption: makeInlineChildren(y.properties?.caption),
+                captionString: valueFromArray(y.properties?.caption),
+              },
+            };
+          }
+          case 'bulleted_list':
+          case 'numbered_list': {
+            return {
+              type: y.type,
+              children: [
+                ...makeInlineChildren(y.properties.title),
+                ...mapContent(y.content),
+              ],
+            };
+          }
+          default:
+            return {
+              type: y.type,
+              // @ts-ignore
+              children: [{ properties: y?.properties }],
+            };
+        }
+      })
+  );
 };
 
 const mapIntermediateContentRepresentation = (x: BlockType) => {
