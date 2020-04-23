@@ -22,22 +22,26 @@ const renderToHtml = () => (x: IntermediateForm) => {
 
     const spec: { [k: string]: any } = {
       tag: 'span',
-      props: { style: '' },
+      props: { style: '', class: [] },
       children: y.children,
     };
 
     y.props.attributes.forEach((z) => {
-      if (z.type === 'i') spec.props.style += 'font-style:italic;';
-      if (z.type === 'b') spec.props.style += 'font-weight:bold;';
+      if (z.type === 'i') spec.props.class.push('italic');
+      if (z.type === 'b') spec.props.class.push('bold');
       if (z.type === 'a') {
         spec.tag = 'a';
         spec.props.href = z.meta;
+      }
+      if (z.type === 'c') {
+        spec.tag = 'code';
       }
     });
 
     const attrString = Object.entries(spec.props)
       .reduce((str, [k, v]) => {
-        return v ? str + `${k}="${v}"` + ' ' : ''; // The space is separate just to make it more obvious
+        const value = Array.isArray(v) ? v.join(' ') : v;
+        return value ? str + `${k}="${value}"` + ' ' : ''; // The space is separate just to make it more obvious
       }, '')
       .trim();
 
@@ -67,13 +71,21 @@ const renderToHtml = () => (x: IntermediateForm) => {
       case 'newline':
         return ``;
       case 'quote':
-        return `<blockquote>${child.children
-          .map(buildHtml)
-          .join('')}</blockquote>`;
+        return `<blockquote>${buildInline(child.children)}</blockquote>`;
       case 'bulleted_list':
         return `<ul><li>${child.children.map(buildHtml).join('')}</li></ul>`;
       case 'numbered_list':
         return `<ol><li>${child.children.map(buildHtml).join('')}</li></ol>`;
+      case 'divider':
+        return `<hr />`; // Any need for children here?
+      case 'callout':
+        return `<div class="${child.type}">${child.children
+          .map(buildHtml)
+          .join('')}</div>`;
+      case 'to_do':
+        return `<div class="${
+          child.type
+        }"><span class="checkbox" />${buildInline(child.children)}</div>`;
       case 'image':
         const alt = child.props.captionString || '';
         const figcaption = child.props.caption

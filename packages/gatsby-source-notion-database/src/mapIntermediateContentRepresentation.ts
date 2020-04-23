@@ -91,6 +91,7 @@ const mapContent = (
           },
         };
       }
+      case 'quote':
       case 'bulleted_list':
       case 'numbered_list': {
         return {
@@ -101,6 +102,9 @@ const mapContent = (
           ],
         };
       }
+      case 'divider':
+      case 'callout':
+      case 'to_do':
       default:
         return {
           type: y.type,

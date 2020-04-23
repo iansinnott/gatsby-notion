@@ -161,6 +161,11 @@ const createNodesFromCollection = async (
 
     await context.cache.set(id, chunk);
 
+    // A quick rest before continuing. For something like a blog this
+    // probably isn't an issue but for a real table of data who knows how
+    // many rows there could be
+    await sleep(1000);
+
     return chunk;
   };
 
@@ -381,11 +386,6 @@ const createNodesFromCollection = async (
         // Load in all blocks from the row as a page if it has content
         const chunk = await loadPageChunk(row.id);
         Object.assign(blockMap, chunk.recordMap.block);
-
-        // A quick rest before continuing. For something like a blog this
-        // probably isn't an issue but for a real table of data who knows how
-        // many rows there could be
-        await sleep(1000);
       }
 
       // Hm, rather than loadPageChunk I think we could acutally use getRecordValues. The record IDs seem to be passed back without any pagination/
