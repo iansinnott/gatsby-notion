@@ -21,6 +21,7 @@
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "dependencies": {
+    "escape-goat": "^3.0.0",
     "gatsby": "^2.20.21",
     "gatsby-core-utils": "^1.1.1",
     "notionapi-agent": "^1.2.0",

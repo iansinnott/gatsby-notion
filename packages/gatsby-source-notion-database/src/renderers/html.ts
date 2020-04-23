@@ -1,5 +1,6 @@
 import { IntermediateForm, Unpacked } from '../types';
 import { map, pipe, join } from '../helpers';
+import { htmlEscape } from 'escape-goat';
 
 const renderToHtml = () => (x: IntermediateForm) => {
   const mapInline = (
@@ -12,11 +13,11 @@ const renderToHtml = () => (x: IntermediateForm) => {
       | string,
   ): string => {
     if (typeof y === 'string') {
-      return `<sup>${y}</sup>`;
+      return htmlEscape(y);
     }
     if (!y.props.attributes.length) {
       console.log('return text', y);
-      return y.children;
+      return htmlEscape(y.children);
     }
 
     const spec: { [k: string]: any } = {
@@ -40,7 +41,9 @@ const renderToHtml = () => (x: IntermediateForm) => {
       }, '')
       .trim();
 
-    return `<${spec.tag} ${attrString}>${spec.children}</${spec.tag}>`;
+    return `<${spec.tag} ${attrString}>${htmlEscape(spec.children)}</${
+      spec.tag
+    }>`;
   };
 
   const buildInline = pipe(map(mapInline), join(''));
@@ -63,9 +66,13 @@ const renderToHtml = () => (x: IntermediateForm) => {
         return `<pre>${buildInline(child.children)}</pre>`;
       case 'newline':
         return ``;
+      case 'quote':
+        return `<blockquote>${child.children
+          .map(buildHtml)
+          .join('')}</blockquote>`;
       case 'bulleted_list':
         return `<ul><li>${child.children.map(buildHtml).join('')}</li></ul>`;
-      case 'bulleted_list':
+      case 'numbered_list':
         return `<ol><li>${child.children.map(buildHtml).join('')}</li></ol>`;
       case 'image':
         const alt = child.props.captionString || '';
