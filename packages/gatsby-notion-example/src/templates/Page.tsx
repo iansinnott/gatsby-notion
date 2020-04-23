@@ -12,8 +12,8 @@ export default ({ data }) => {
   );
 };
 export const query = graphql`
-  query($slug: String!) {
-    row: notionCollectionNodePostMetadata(id: { eq: $slug }) {
+  query($id: String!) {
+    row: notionDbPostMetadata(id: { eq: $id }) {
       id
       rendered {
         html

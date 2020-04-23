@@ -1,11 +1,12 @@
 import { GatsbyNode, SourceNodesArgs } from 'gatsby';
-import { NotionsoPluginOptions } from './types';
+import { NotionsoPluginOptions, IntermediateForm } from './types';
 import createNodesFromCollection from './createNodesFromCollection';
 import { isNotionNode } from './helpers';
 
 const defaultConfig = {
   debug: false,
   downloadLocal: true,
+  makeSlug: (x: IntermediateForm) => x.id,
 };
 
 export const sourceNodes: GatsbyNode['sourceNodes'] = async (
@@ -31,19 +32,4 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   }
 
   await createNodesFromCollection(context, config);
-};
-
-export const onCreateNode: GatsbyNode['onCreateNode'] = (
-  { node, actions, getNode },
-  config: NotionsoPluginOptions,
-) => {
-  const { createNodeField } = actions;
-  if (isNotionNode(node)) {
-    const slug = `/pages/${node.id}`;
-    createNodeField({
-      node,
-      name: `slug`,
-      value: slug,
-    });
-  }
 };

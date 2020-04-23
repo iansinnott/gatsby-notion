@@ -15,10 +15,11 @@ const makeInlineChildren = (titleProp: SemanticString[] | undefined) => {
   return titleProp.map(([str, attrs]) => {
     // prettier-ignore
     // @ts-ignore
-    const attributes = !attrs ? [] : attrs.map(([typ, meta]) => ({ type: typ, meta }));
+    const attributes: ({ type: string, meta?: string })[] = !attrs ? [] : attrs.map(([typ, meta]) => ({ type: typ, meta }));
     return {
-      text: str,
-      attributes,
+      type: 'inline',
+      children: str,
+      props: { attributes },
     };
   });
 };
@@ -43,69 +44,71 @@ const mapContent = (
     return [];
   }
 
-  return (
-    content
-      // This silliness is just to get around some typing issues with the
-      // recursion... We never want to call this with strings but the types imported
-      // from elsewhere thing strings are what we get
-      .filter(<T>(y: T | string): y is T => {
-        return typeof y !== 'string';
-      })
-      .map((y) => {
-        switch (y.type) {
-          case 'header':
-          case 'text': {
-            const result = makeInlineChildren(y.properties?.title);
-            // What does it mean when this is undefined? An empty line?
-            return result
-              ? { type: y.type, children: result }
-              : { type: 'newline', children: [] };
-          }
-          // @ts-ignore Not an official type
-          case 'newline':
-            return { type: 'newline', children: [] };
-          case 'code': {
-            return {
-              type: y.type,
-              children: makeInlineChildren(y.properties?.title),
-              props: {
-                language: valueFromArray(y.properties?.language),
-              },
-            };
-          }
-          case 'image': {
-            return {
-              type: y.type,
-              children: [],
-              props: {
-                // NOTE: The `source` property does indeed include an s3 image URL, but it's not accessible directly
-                src: `https://www.notion.so/image/${encodeURIComponent(
-                  valueFromArray(y.properties?.source),
-                )}`,
-                caption: makeInlineChildren(y.properties?.caption),
-                captionString: valueFromArray(y.properties?.caption),
-              },
-            };
-          }
-          case 'bulleted_list':
-          case 'numbered_list': {
-            return {
-              type: y.type,
-              children: [
-                ...makeInlineChildren(y.properties.title),
-                ...mapContent(y.content),
-              ],
-            };
-          }
-          default:
-            return {
-              type: y.type,
+  return content.map((y) => {
+    if (typeof y === 'string') {
+      return y;
+    }
+
+    switch (y.type) {
+      // @ts-ignore
+      case 'inline':
+        return y;
+
+      case 'header':
+      case 'sub_header':
+      case 'sub_sub_header':
+      case 'text': {
+        const children = makeInlineChildren(y.properties?.title);
+        // What does it mean when this is undefined? An empty line?
+        return children
+          ? { type: y.type, children }
+          : { type: 'newline', children: [] };
+      }
+      // @ts-ignore Not an official type
+      case 'newline':
+        return { type: 'newline', children: [] };
+      case 'code': {
+        return {
+          type: y.type,
+          children: makeInlineChildren(y.properties?.title),
+          props: {
+            language: valueFromArray(y.properties?.language),
+          },
+        };
+      }
+      case 'image': {
+        return {
+          type: y.type,
+          children: [],
+          props: {
+            // NOTE: The `source` property does indeed include an s3 image URL, but it's not accessible directly
+            src: `https://www.notion.so/image/${encodeURIComponent(
               // @ts-ignore
-              children: [{ properties: y?.properties }],
-            };
-        }
-      })
-  );
+              valueFromArray(y.properties?.source),
+            )}`,
+            caption: makeInlineChildren(y.properties?.caption),
+            captionString: valueFromArray(y.properties?.caption),
+          },
+        };
+      }
+      case 'bulleted_list':
+      case 'numbered_list': {
+        return {
+          type: y.type,
+          children: [
+            ...makeInlineChildren(y.properties.title),
+            ...mapContent(y.content),
+          ],
+        };
+      }
+      default:
+        return {
+          type: y.type,
+          // @ts-ignore
+          children: [{ properties: y?.properties }],
+        };
+    }
+  });
 };
 
 const mapIntermediateContentRepresentation = (x: BlockType) => {

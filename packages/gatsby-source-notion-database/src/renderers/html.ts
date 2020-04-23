@@ -2,22 +2,30 @@ import { IntermediateForm, Unpacked } from '../types';
 import { map, pipe, join } from '../helpers';
 
 const renderToHtml = () => (x: IntermediateForm) => {
-  const mapInline = (y: {
-    text: string;
-    attributes: Array<{ type: string; meta?: any }>;
-  }): string => {
-    if (!y.attributes.length) {
+  const mapInline = (
+    y:
+      | {
+          type: string;
+          children: string;
+          props: { attributes: Array<{ type: string; meta?: any }> };
+        }
+      | string,
+  ): string => {
+    if (typeof y === 'string') {
+      return `<sup>${y}</sup>`;
+    }
+    if (!y.props.attributes.length) {
       console.log('return text', y);
-      return y.text;
+      return y.children;
     }
 
     const spec: { [k: string]: any } = {
       tag: 'span',
       props: { style: '' },
-      children: y.text,
+      children: y.children,
     };
 
-    y.attributes.forEach((z) => {
+    y.props.attributes.forEach((z) => {
       if (z.type === 'i') spec.props.style += 'font-style:italic;';
       if (z.type === 'b') spec.props.style += 'font-weight:bold;';
       if (z.type === 'a') {
@@ -39,8 +47,15 @@ const renderToHtml = () => (x: IntermediateForm) => {
 
   const buildHtml = (child: Unpacked<typeof x['content']>) => {
     switch (child.type) {
+      case 'inline':
+        // @ts-ignore
+        return buildInline([child]);
       case 'header':
         return `<h1>${buildInline(child.children)}</h1>`;
+      case 'sub_header':
+        return `<h2>${buildInline(child.children)}</h2>`;
+      case 'sub_sub_header':
+        return `<h3>${buildInline(child.children)}</h3>`;
       case 'text':
         return `<p>${buildInline(child.children)}</p>`;
       case 'code':
@@ -49,7 +64,9 @@ const renderToHtml = () => (x: IntermediateForm) => {
       case 'newline':
         return ``;
       case 'bulleted_list':
-        return `<ul><li>${buildHtml(child.children)}</li></ul>`;
+        return `<ul><li>${child.children.map(buildHtml).join('')}</li></ul>`;
+      case 'bulleted_list':
+        return `<ol><li>${child.children.map(buildHtml).join('')}</li></ol>`;
       case 'image':
         const alt = child.props.captionString || '';
         const figcaption = child.props.caption

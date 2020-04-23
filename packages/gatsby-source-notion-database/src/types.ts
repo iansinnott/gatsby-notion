@@ -106,6 +106,7 @@ export interface NotionsoPluginOptions extends PluginOptions {
   downloadLocal: boolean;
   debug?: boolean;
   renderers?: { [k: string]: (x: IntermediateForm) => any };
+  makeSlug?: (x: IntermediateForm) => string;
 }
 
 export interface NotionLoaderImageInformation {

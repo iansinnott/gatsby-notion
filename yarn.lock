@@ -2,6 +2,16 @@
 # yarn lockfile v1
 
 
+"@dnpr/logger@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@dnpr/logger/-/logger-0.2.0.tgz#6088c2973bd23f393c65dfd3fdb60308fa137907"
+  integrity sha512-U384i5/SzH9qhgW0Ev95YGkQAww0pZT/IqtJIi5jB9lpGoPGPvXlwr9RMUtlz0T/pGulEmLmTqwxmDXqzFfJCg==
+
+"@dnpr/make-request@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@dnpr/make-request/-/make-request-0.1.1.tgz#a0b4f3c8b2e4f0917c45faa850788366529a23e7"
+  integrity sha512-3la/iufCb7GFTy+pwiIZlH7LDQvQ0X/2gGtDG6klmkArjohiE+NNmCGQGisWlRJvKYN8pe793MJlkXCcbrIL5g==
+
 "@evocateur/libnpmaccess@^3.1.2":
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/@evocateur/libnpmaccess/-/libnpmaccess-3.1.2.tgz#ecf7f6ce6b004e9f942b098d92200be4a4b1c845"
@@ -3311,6 +3321,14 @@ normalize-url@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/normalize-url/-/normalize-url-3.3.0.tgz#b2e1c4dc4f7c6d57743df733a4f5978d18650559"
   integrity sha512-U+JJi7duF1o+u2pynbp2zXDW2/PADgC30f0GsHZtRh+HOcXHnw137TrNlyxxRvWW5fjKd3bcLHPxofWuCjaeZg==
+
+notionapi-agent@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/notionapi-agent/-/notionapi-agent-1.2.0.tgz#d64e658f3c36b5ecc7f30827359d45307165614c"
+  integrity sha512-/ylIPRVdkFcufct+ZK0LAsovr4na9BNGnZiIz3W7NxigIhoMuXkQSCFtNKNXjp29gYv9iXpoy/8va7cPkTKgtA==
+  dependencies:
+    "@dnpr/logger" "^0.2.0"
+    "@dnpr/make-request" "^0.1.1"
 
 npm-bundled@^1.0.1:
   version "1.1.1"

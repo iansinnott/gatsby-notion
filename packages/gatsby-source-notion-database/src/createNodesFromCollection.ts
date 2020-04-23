@@ -11,7 +11,8 @@ import { SourceNodesArgs, Reporter } from 'gatsby';
 import { createAgent } from 'notionapi-agent';
 import { inspect } from 'util';
 import mapIntermediateContentRepresentation from './mapIntermediateContentRepresentation';
-import { NOTION_NODE_PREFIX, tap } from './helpers';
+import { NOTION_NODE_PREFIX, tap, sleep } from './helpers';
+import { LoadPageChunk } from 'notionapi-agent/dist/interfaces/notion-api/v3/loadPageChunk';
 
 const mapNotionPropertyValue = ({
   type,
@@ -113,6 +114,7 @@ const createNodesFromCollection = async (
   const notion = createAgent({ debug });
   const reporter = wrapReporter(context.reporter);
   const parsed = parseCollectionViewUrl(config.databaseViewUrl);
+  const blockMap = {};
 
   if (!parsed) {
     reporter.panic(`Could not parse database view URL: ${config.rootPageUrl}`);
@@ -127,7 +129,26 @@ const createNodesFromCollection = async (
     )}`,
   );
 
-  const loadPageChunk = (id: string) => {
+  const loadPageChunk = async (id: string, { skipCache = false } = {}) => {
+    let _chunk;
+    try {
+      _chunk = await context.cache.get(id);
+    } catch (err) {
+      // Do I need to ensure the cache file exists?
+      await context.cache.set('gatsby-source-notion-database__INIT', true);
+    }
+
+    if (_chunk && !skipCache) {
+      if (config.debug) {
+        reporter.info(`Cache hit for loadPageChunk ${id}`);
+      }
+      return _chunk as LoadPageChunk.Response;
+    }
+
+    // TODO: In theory this needs to be modified to fetch more and more chunks
+    // for very long pages, thus the name. By fetching roughly 1000 chunks we
+    // will get most content for most pages but we may well end up with some
+    // chopped off content. Just going to go with it for now.
     const data = {
       pageId: id,
       limit: 70 * 14,
@@ -135,7 +156,12 @@ const createNodesFromCollection = async (
       chunkNumber: 0,
       verticalColumns: false,
     };
-    return notion.loadPageChunk(data);
+
+    const chunk = await notion.loadPageChunk(data);
+
+    await context.cache.set(id, chunk);
+
+    return chunk;
   };
 
   const queryCollection = async ({
@@ -180,10 +206,7 @@ const createNodesFromCollection = async (
       prettyPrint(queryArgs);
     }
 
-    const fetchContent = async (
-      ids: string[],
-      blockMap: { [k: string]: any },
-    ) => {
+    const fetchContent = async (ids: string[]) => {
       // Just to avoid odd situations
       if (ids.length === 0) return ids;
 
@@ -217,9 +240,8 @@ const createNodesFromCollection = async (
     };
 
     // recursive logic works.... but not all node ids are returned in the initial raw data. Hm.
-    const getContentForBlocks = async (blocks, blockMap) => {
+    const getContentForBlocks = async (blocks) => {
       const result = [];
-      debugger;
       for (const b of blocks) {
         // Defend against empty rows in collections. Notion does not even include a properties object for these rows
         if (!b.properties) {
@@ -241,19 +263,17 @@ const createNodesFromCollection = async (
         // The node may already have content fetched, in which case it will be an array of objects. Do not fetch if this is the case.
         if (b.content) {
           const fetched = b.content.every((x) => typeof x === 'string')
-            ? await fetchContent(b.content, blockMap)
+            ? await fetchContent(b.content)
             : b.content;
           result.push({
             ...b,
             // Recurse
-            content: await getContentForBlocks(fetched, blockMap),
+            content: await getContentForBlocks(fetched),
           });
         } else {
           result.push(b);
         }
       }
-
-      debugger;
 
       return result;
     };
@@ -261,7 +281,8 @@ const createNodesFromCollection = async (
     return notion.queryCollection(queryArgs).then(async (raw) => {
       const { schema } = collection;
       const missingContentBlocks = [];
-      const blockMap = raw.recordMap.block;
+
+      Object.assign(blockMap, raw.recordMap.block);
 
       const rows = raw.result.blockIds
         .map((id) => {
@@ -287,22 +308,22 @@ const createNodesFromCollection = async (
         )
         .filter((x) => x.properties)
         .map((x) => {
-          const content = x.content
-            ? x.content
-                .filter((id) => {
-                  const isBlockMapped = Boolean(blockMap[id]);
-                  if (!isBlockMapped) {
-                    reporter.warn(
-                      `No body block found for ID ${id}. Skipping this block. If you think this is a mistake try viewing the content of page: ${x.id}`,
-                    );
-                  }
-                  return isBlockMapped;
-                })
-                .map((id) => blockMap[id])
-                .map((y) => {
-                  return y.value;
-                })
-            : undefined;
+          // const content = x.content
+          //   ? x.content
+          //       .filter((id) => {
+          //         const isBlockMapped = Boolean(blockMap[id]);
+          //         if (!isBlockMapped) {
+          //           reporter.warn(
+          //             `No body block found for ID ${id}. Skipping this block. If you think this is a mistake try viewing the content of page: ${x.id}`,
+          //           );
+          //         }
+          //         return isBlockMapped;
+          //       })
+          //       .map((id) => blockMap[id])
+          //       .map((y) => {
+          //         return y.value;
+          //       })
+          //   : undefined;
           const propertyDetails: {
             [k: string]: PropertyDetails;
           } = Object.entries(x.properties)
@@ -344,11 +365,35 @@ const createNodesFromCollection = async (
             _notionBlockId: x.id,
             _propertyDetails: propertyDetails,
             properties,
-            content,
+            // content,
           };
         });
 
-      const blocks = await getContentForBlocks(rows, blockMap);
+      // Load all pages
+      for (const row of rows) {
+        // TODO: skipCache if last_edited_time is more recent than last gatsby run. Need to store the last run time somewhere.
+
+        if (!row.content || row.content.length === 0) {
+          reporter.info('No content to fetch. Will not call loadPageChunk');
+          continue;
+        }
+
+        // Load in all blocks from the row as a page if it has content
+        const chunk = await loadPageChunk(row.id);
+        Object.assign(blockMap, chunk.recordMap.block);
+
+        // A quick rest before continuing. For something like a blog this
+        // probably isn't an issue but for a real table of data who knows how
+        // many rows there could be
+        await sleep(1000);
+      }
+
+      // Hm, rather than loadPageChunk I think we could acutally use getRecordValues. The record IDs seem to be passed back without any pagination/
+
+      // This will recurse and fill in all the content, but I think it would
+      // be better to do it in a resolver, so as not to do it every time
+      // unless the UI is actively calling for it
+      const blocks = await getContentForBlocks(rows);
 
       /**
        * ------------------------------------------------------------------------------------------------
@@ -403,8 +448,6 @@ const createNodesFromCollection = async (
   const formattedCollectionName = collectionName
     .replace(/ /g, '_')
     .replace(/[^A-Za-z_]/, '');
-  prettyPrint(blocks);
-  prettyPrint(collection);
 
   const NODE_TYPE = NOTION_NODE_PREFIX + formattedCollectionName;
 
@@ -458,6 +501,10 @@ const createNodesFromCollection = async (
         }),
       },
     };
+
+    // Add the slug
+    // @ts-ignore
+    node.slug = config.makeSlug(node);
 
     // if (debug) {
     //   reporter.info(`Adding node`);
