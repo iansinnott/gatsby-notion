@@ -78,14 +78,16 @@ const renderToHtml = () => (x: IntermediateForm) => {
         return `<ol><li>${child.children.map(buildHtml).join('')}</li></ol>`;
       case 'divider':
         return `<hr />`; // Any need for children here?
+      case 'toggle':
       case 'callout':
+        debugger;
         return `<div class="${child.type}">${child.children
           .map(buildHtml)
           .join('')}</div>`;
       case 'to_do':
         return `<div class="${
           child.type
-        }"><span class="checkbox" />${buildInline(child.children)}</div>`;
+        }"><span class="checkbox"></span>${buildInline(child.children)}</div>`;
       case 'image':
         const alt = child.props.captionString || '';
         const figcaption = child.props.caption

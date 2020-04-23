@@ -57,6 +57,8 @@ const mapContent = (
       case 'header':
       case 'sub_header':
       case 'sub_sub_header':
+      case 'to_do':
+      case 'callout':
       case 'text': {
         const children = makeInlineChildren(y.properties?.title);
         // What does it mean when this is undefined? An empty line?
@@ -64,9 +66,10 @@ const mapContent = (
           ? { type: y.type, children }
           : { type: 'newline', children: [] };
       }
+      case 'divider':
       // @ts-ignore Not an official type
       case 'newline':
-        return { type: 'newline', children: [] };
+        return { type: y.type, children: [] };
       case 'code': {
         return {
           type: y.type,
@@ -91,6 +94,7 @@ const mapContent = (
           },
         };
       }
+      case 'toggle':
       case 'quote':
       case 'bulleted_list':
       case 'numbered_list': {
@@ -102,9 +106,6 @@ const mapContent = (
           ],
         };
       }
-      case 'divider':
-      case 'callout':
-      case 'to_do':
       default:
         return {
           type: y.type,
