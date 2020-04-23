@@ -13,6 +13,7 @@ import { inspect } from 'util';
 import mapIntermediateContentRepresentation from './mapIntermediateContentRepresentation';
 import { NOTION_NODE_PREFIX, tap, sleep } from './helpers';
 import { LoadPageChunk } from 'notionapi-agent/dist/interfaces/notion-api/v3/loadPageChunk';
+import { renderToHtml } from './renderers';
 
 const mapNotionPropertyValue = ({
   type,
@@ -129,20 +130,34 @@ const createNodesFromCollection = async (
     )}`,
   );
 
-  const loadPageChunk = async (id: string, { skipCache = false } = {}) => {
-    let _chunk;
+  const loadPageChunk = async (
+    id: string,
+    updatedAt?: number,
+  ): Promise<LoadPageChunk.Response> => {
+    let chunk: LoadPageChunk.Response | undefined;
+    let refreshedAt;
+
     try {
-      _chunk = await context.cache.get(id);
+      const cached = await context.cache.get(id);
+      chunk = cached.chunk;
+      refreshedAt = cached.refreshedAt;
     } catch (err) {
       // Do I need to ensure the cache file exists?
       await context.cache.set('gatsby-source-notion-database__INIT', true);
     }
 
-    if (_chunk && !skipCache) {
+    const shouldReload =
+      updatedAt === undefined ||
+      refreshedAt === undefined ||
+      refreshedAt < updatedAt;
+
+    if (updatedAt) debugger;
+
+    if (chunk && !shouldReload) {
       if (config.debug) {
         reporter.info(`Cache hit for loadPageChunk ${id}`);
       }
-      return _chunk as LoadPageChunk.Response;
+      return chunk as LoadPageChunk.Response;
     }
 
     // TODO: In theory this needs to be modified to fetch more and more chunks
@@ -157,9 +172,9 @@ const createNodesFromCollection = async (
       verticalColumns: false,
     };
 
-    const chunk = await notion.loadPageChunk(data);
+    chunk = await notion.loadPageChunk(data);
 
-    await context.cache.set(id, chunk);
+    await context.cache.set(id, { refreshedAt: Date.now(), chunk });
 
     // A quick rest before continuing. For something like a blog this
     // probably isn't an issue but for a real table of data who knows how
@@ -384,7 +399,7 @@ const createNodesFromCollection = async (
         }
 
         // Load in all blocks from the row as a page if it has content
-        const chunk = await loadPageChunk(row.id);
+        const chunk = await loadPageChunk(row.id, row.last_edited_time);
         Object.assign(blockMap, chunk.recordMap.block);
       }
 
@@ -473,17 +488,25 @@ const createNodesFromCollection = async (
   // `);
 
   // @ts-ignore
-  for (const block of blocks.map(mapIntermediateContentRepresentation)) {
-    let renderedContent = {};
+  for (const raw of blocks) {
+    const block = mapIntermediateContentRepresentation(raw);
 
-    if (config.renderers) {
-      Object.entries(config.renderers).forEach(([k, render]) => {
+    let renderedContent: { [k: string]: string } = {};
+    let renderers = [
+      { name: 'json', render: JSON.stringify },
+      { name: 'html', render: renderToHtml() },
+    ];
+
+    // If it's just a table with rows not being full pages there won't be any content
+    if (block.content && block.content.length) {
+      renderers.forEach((x) => {
         try {
-          // @ts-ignore
-          renderedContent[k] = render(block);
+          const k = `content_${x.name}`;
+          debugger;
+          renderedContent[k] = x.render(block);
         } catch (err) {
           reporter.warn(
-            `[RENDER ERROR] Additional renderer supplied for key "${k}" threw an error while rendering. See next line:`,
+            `[RENDER ERROR] Renderer "${x.name}" threw an error while rendering. See next line:`,
           );
           reporter.warn(`[RENDER ERROR] ${err.message}`);
         }
@@ -492,8 +515,8 @@ const createNodesFromCollection = async (
 
     const node = {
       ...block,
+      ...renderedContent,
       id: context.createNodeId(block.id),
-      rendered: renderedContent,
       internal: {
         type: NODE_TYPE,
         contentDigest: context.createContentDigest({

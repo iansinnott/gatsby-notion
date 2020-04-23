@@ -17,7 +17,7 @@ export default ({ data }) => {
     <div>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <p>Row ID {row.id}</p>
-      <div dangerouslySetInnerHTML={{ __html: row.rendered.html }}></div>
+      <div dangerouslySetInnerHTML={{ __html: row.content_html }}></div>
     </div>
   );
 };
@@ -25,9 +25,7 @@ export const query = graphql`
   query($id: String!) {
     row: notionDbPostMetadata(id: { eq: $id }) {
       id
-      rendered {
-        html
-      }
+      content_html
     }
   }
 `;

@@ -78,9 +78,13 @@ const renderToHtml = () => (x: IntermediateForm) => {
         return `<ol><li>${child.children.map(buildHtml).join('')}</li></ol>`;
       case 'divider':
         return `<hr />`; // Any need for children here?
-      case 'toggle':
+      case 'toggle': {
+        const children = child.children.map(buildHtml);
+        let [first, ...rest] = children;
+        first = `<div class="toggle-title">${first}</div>`;
+        return `<div class="${child.type}">${[first, ...rest].join('')}</div>`;
+      }
       case 'callout':
-        debugger;
         return `<div class="${child.type}">${child.children
           .map(buildHtml)
           .join('')}</div>`;
