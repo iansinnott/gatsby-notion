@@ -33,7 +33,7 @@ const IndexPage = () => {
           properties {
             title
             created
-            published
+            # published
             status
             tags
           }

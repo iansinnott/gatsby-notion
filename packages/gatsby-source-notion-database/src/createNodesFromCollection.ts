@@ -28,9 +28,11 @@ const mapNotionPropertyValue = ({
     case 'select':
     case 'multi_select':
       return value[0][0]; // It appears the tags get put together into a comma-separated string
-    case 'date': {
+    case 'date':
+    case 'datetime': {
+      // NOTE: In the case of datetime we also get start_time adn time_zone
+      // props, although they are not used here
       const dateObjects = value[0][1].map((x: [string, DateObject]) => x[1]);
-      prettyPrint(dateObjects);
       return new Date(dateObjects[0].start_date).toISOString();
     }
     default:
@@ -210,8 +212,7 @@ const createNodesFromCollection = async (
       collectionId: collection.id,
       collectionViewId,
       loader: {
-        // limit: 70 * 14,
-        limit: 3, // TODO!
+        limit: 70 * 14,
         loadContentCover: true,
         // @ts-ignore
         searchQuery: '',
@@ -350,29 +351,21 @@ const createNodesFromCollection = async (
           //   : undefined;
           const propertyDetails: {
             [k: string]: PropertyDetails;
-          } = Object.entries(x.properties)
-            .filter(([pid, value]) => {
-              const inSchema = schema[pid];
-              if (!inSchema) {
-                reporter.warn(
-                  `No property mapping found for PID ${pid}. Skipping property. If you think this is a mistake try viewing the content of page: ${x.id}`,
-                );
-              }
-
-              return inSchema;
-            })
-            .map(([pid, value]) => {
-              const { name, type } = schema[pid];
+          } = Object.entries(schema)
+            .map(([pid, property]) => {
+              const { name, type } = property;
+              const value = x.properties[pid];
               return {
                 pid,
-                // @ts-ignore
-                value: mapNotionPropertyValue({ type, value }),
-                _raw: JSON.stringify(value),
+                value: value ? mapNotionPropertyValue({ type, value }) : null,
+                _raw: value ? JSON.stringify(value) : null,
                 name,
                 type,
               };
             })
             .reduce((agg, y) => ({ ...agg, [y.name]: y }), {});
+
+          debugger;
 
           // A direct mapping of property names to values. This should be more
           // intuitive to access than getting a property and then saying
@@ -476,25 +469,25 @@ const createNodesFromCollection = async (
 
   const NODE_TYPE = NOTION_NODE_PREFIX + formattedCollectionName;
 
-  // context.actions.createTypes(`
-  //   type ${NODE_TYPE} implements Node {
-  //     version: Int
-  //     type: String!
-  //     created_time: Date @dateformat
-  //     last_edited_time: Date @dateformat
-  //     slug: String
-  //     content_json: String
-  //     content_html: String
-  //     parent_id: String
-  //     parent_table: String
-  //     alive: Boolean
-  //     created_by_table: String
-  //     created_by_id: String
-  //     last_edited_by_table: String
-  //     last_edited_by_id: String
-  //     _notionBlockId: String!
-  //   }
-  // `);
+  context.actions.createTypes(`
+    type ${NODE_TYPE} implements Node {
+      version: Int
+      type: String!
+      created_time: Date @dateformat
+      last_edited_time: Date @dateformat
+      slug: String
+      content_json: String
+      content_html: String
+      parent_id: String
+      parent_table: String
+      alive: Boolean
+      created_by_table: String
+      created_by_id: String
+      last_edited_by_table: String
+      last_edited_by_id: String
+      _notionBlockId: String!
+    }
+  `);
 
   // @ts-ignore
   for (const raw of blocks) {
@@ -537,6 +530,13 @@ const createNodesFromCollection = async (
     // Add the slug
     // @ts-ignore
     node.slug = config.makeSlug(node);
+
+    if (block.content) {
+      node.content = block.content.map(({ type, ...rest }) => ({
+        type,
+        json: JSON.stringify(rest),
+      }));
+    }
 
     context.actions.createNode(node);
   }

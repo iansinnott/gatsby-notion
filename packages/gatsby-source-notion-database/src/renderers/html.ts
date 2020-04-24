@@ -16,7 +16,6 @@ const renderToHtml = () => (x: IntermediateForm) => {
       return htmlEscape(y);
     }
     if (!y.props.attributes.length) {
-      console.log('return text', y);
       return htmlEscape(y.children);
     }
 
