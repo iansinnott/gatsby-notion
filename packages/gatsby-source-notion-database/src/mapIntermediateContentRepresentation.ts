@@ -24,9 +24,11 @@ const makeInlineChildren = (titleProp: SemanticString[] | undefined) => {
   });
 };
 
-const valueFromArray = (arr: any[] | undefined) => {
-  if (!arr) return arr;
-  // @ts-ignore
+const valueFromArray = <T>(arr: T[] | undefined): string => {
+  if (!arr) {
+    console.warn('Warning when processing value. Not an array of arrays', arr);
+    return '';
+  }
   return arr.flat().join('');
 };
 
@@ -80,15 +82,19 @@ const mapContent = (
         };
       }
       case 'image': {
+        // NOTE: The logic around whether or not to convert the source to notion
+        // format is due to the data import. I imported data into notion and teh
+        // image URLs remained pointing to external images, they did not get
+        // converted to use notion URLs
+        const source = valueFromArray(y.properties.source);
         return {
           type: y.type,
           children: [],
           props: {
             // NOTE: The `source` property does indeed include an s3 image URL, but it's not accessible directly
-            src: `https://www.notion.so/image/${encodeURIComponent(
-              // @ts-ignore
-              valueFromArray(y.properties?.source),
-            )}`,
+            src: source.includes('notion-static')
+              ? `https://www.notion.so/image/${encodeURIComponent(source)}`
+              : source, // If it's not a notion URL we don't want to break it. See NOTE
             caption: makeInlineChildren(y.properties?.caption),
             captionString: valueFromArray(y.properties?.caption),
           },

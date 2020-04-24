@@ -24,16 +24,18 @@ const IndexPage = () => {
       }
 
       # NOTE! The query field name is based on your database name
-      database: allNotionDbPostMetadata(
-        sort: { fields: properties___Date, order: DESC }
+      database: allNotionDbPosts(
+        sort: { fields: properties___created, order: DESC }
       ) {
-        rows: nodes {
+        nodes {
           id
           slug
           properties {
-            Tags
-            Name
-            Date
+            title
+            created
+            published
+            status
+            tags
           }
         }
       }
@@ -48,9 +50,9 @@ const IndexPage = () => {
         site.
       </p>
       <p>Now go build something great.</p>
-      {data.database.rows.map((row) => (
-        <div key={row.id}>
-          <Link to={`/${row.slug}`}>{row.properties.Name}</Link>
+      {data.database.nodes.map((node) => (
+        <div key={node.id}>
+          <Link to={`/${node.slug}`}>{node.properties.title}</Link>
         </div>
       ))}
     </div>

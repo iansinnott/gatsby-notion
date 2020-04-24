@@ -1,9 +1,8 @@
 exports.createPages = async function({ actions, graphql }) {
   const { data } = await graphql(`
     query {
-      db: allNotionDbPostMetadata(
-        # These properties depend on your database view shape
-        sort: { fields: properties___Date, order: DESC }
+      db: allNotionDbPosts(
+        sort: { fields: properties___created, order: DESC }
       ) {
         nodes {
           id

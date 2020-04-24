@@ -23,7 +23,7 @@ export default ({ data }) => {
 };
 export const query = graphql`
   query($id: String!) {
-    row: notionDbPostMetadata(id: { eq: $id }) {
+    row: notionDbPosts(id: { eq: $id }) {
       id
       content_html
     }

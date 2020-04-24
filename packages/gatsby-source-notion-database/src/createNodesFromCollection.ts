@@ -25,6 +25,7 @@ const mapNotionPropertyValue = ({
   switch (type) {
     case 'title':
       return value.map((x) => x[0]).join('');
+    case 'select':
     case 'multi_select':
       return value[0][0]; // It appears the tags get put together into a comma-separated string
     case 'date': {
@@ -209,7 +210,8 @@ const createNodesFromCollection = async (
       collectionId: collection.id,
       collectionViewId,
       loader: {
-        limit: 70 * 14,
+        // limit: 70 * 14,
+        limit: 3, // TODO!
         loadContentCover: true,
         // @ts-ignore
         searchQuery: '',
@@ -262,6 +264,7 @@ const createNodesFromCollection = async (
     // recursive logic works.... but not all node ids are returned in the initial raw data. Hm.
     const getContentForBlocks = async (blocks) => {
       const result = [];
+      debugger;
       for (const b of blocks) {
         // Defend against empty rows in collections. Notion does not even include a properties object for these rows
         if (!b.properties) {
@@ -304,6 +307,7 @@ const createNodesFromCollection = async (
 
       Object.assign(blockMap, raw.recordMap.block);
 
+      debugger;
       const rows = raw.result.blockIds
         .map((id) => {
           const x = blockMap[id].value as CollectionBlock;
@@ -398,6 +402,12 @@ const createNodesFromCollection = async (
           continue;
         }
 
+        reporter.info(
+          `Loading page chunk for: ${JSON.stringify(row.properties)}`,
+        );
+
+        debugger;
+
         // Load in all blocks from the row as a page if it has content
         const chunk = await loadPageChunk(row.id, row.last_edited_time);
         Object.assign(blockMap, chunk.recordMap.block);
@@ -467,14 +477,14 @@ const createNodesFromCollection = async (
   const NODE_TYPE = NOTION_NODE_PREFIX + formattedCollectionName;
 
   // context.actions.createTypes(`
-  //   type ${NODE_TYPE}RenderedOutput {
-  //     html: String!
-  //   }
   //   type ${NODE_TYPE} implements Node {
   //     version: Int
   //     type: String!
-  //     created_time: Int
-  //     last_edited_time: Int
+  //     created_time: Date @dateformat
+  //     last_edited_time: Date @dateformat
+  //     slug: String
+  //     content_json: String
+  //     content_html: String
   //     parent_id: String
   //     parent_table: String
   //     alive: Boolean
@@ -482,7 +492,6 @@ const createNodesFromCollection = async (
   //     created_by_id: String
   //     last_edited_by_table: String
   //     last_edited_by_id: String
-  //     rendered: ${NODE_TYPE}RenderedOutput
   //     _notionBlockId: String!
   //   }
   // `);
@@ -493,7 +502,7 @@ const createNodesFromCollection = async (
 
     let renderedContent: { [k: string]: string } = {};
     let renderers = [
-      { name: 'json', render: JSON.stringify },
+      { name: 'json', render: (x: typeof block) => JSON.stringify(x.content) },
       { name: 'html', render: renderToHtml() },
     ];
 
@@ -528,11 +537,6 @@ const createNodesFromCollection = async (
     // Add the slug
     // @ts-ignore
     node.slug = config.makeSlug(node);
-
-    // if (debug) {
-    //   reporter.info(`Adding node`);
-    //   prettyPrint(node);
-    // }
 
     context.actions.createNode(node);
   }
