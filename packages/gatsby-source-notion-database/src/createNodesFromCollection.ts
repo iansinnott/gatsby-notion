@@ -24,6 +24,7 @@ const mapNotionPropertyValue = ({
 }): string | number | boolean => {
   switch (type) {
     case 'title':
+    case 'text':
       return value.map((x) => x[0]).join('');
     case 'select':
     case 'multi_select':
@@ -37,7 +38,6 @@ const mapNotionPropertyValue = ({
     }
     default:
       return `UNKNOWN_PROPERTY_TYPE -- ${type}`;
-      break;
   }
 };
 
@@ -154,8 +154,6 @@ const createNodesFromCollection = async (
       refreshedAt === undefined ||
       refreshedAt < updatedAt;
 
-    if (updatedAt) debugger;
-
     if (chunk && !shouldReload) {
       if (config.debug) {
         reporter.info(`Cache hit for loadPageChunk ${id}`);
@@ -265,7 +263,6 @@ const createNodesFromCollection = async (
     // recursive logic works.... but not all node ids are returned in the initial raw data. Hm.
     const getContentForBlocks = async (blocks) => {
       const result = [];
-      debugger;
       for (const b of blocks) {
         // Defend against empty rows in collections. Notion does not even include a properties object for these rows
         if (!b.properties) {
@@ -308,7 +305,6 @@ const createNodesFromCollection = async (
 
       Object.assign(blockMap, raw.recordMap.block);
 
-      debugger;
       const rows = raw.result.blockIds
         .map((id) => {
           const x = blockMap[id].value as CollectionBlock;
@@ -365,8 +361,6 @@ const createNodesFromCollection = async (
             })
             .reduce((agg, y) => ({ ...agg, [y.name]: y }), {});
 
-          debugger;
-
           // A direct mapping of property names to values. This should be more
           // intuitive to access than getting a property and then saying
           // .value
@@ -398,8 +392,6 @@ const createNodesFromCollection = async (
         reporter.info(
           `Loading page chunk for: ${JSON.stringify(row.properties)}`,
         );
-
-        debugger;
 
         // Load in all blocks from the row as a page if it has content
         const chunk = await loadPageChunk(row.id, row.last_edited_time);
@@ -504,7 +496,6 @@ const createNodesFromCollection = async (
       renderers.forEach((x) => {
         try {
           const k = `content_${x.name}`;
-          debugger;
           renderedContent[k] = x.render(block);
         } catch (err) {
           reporter.warn(
