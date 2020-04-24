@@ -467,7 +467,6 @@ const createNodesFromCollection = async (
       type: String!
       created_time: Date @dateformat
       last_edited_time: Date @dateformat
-      slug: String
       content_json: String
       content_html: String
       parent_id: String
@@ -518,9 +517,11 @@ const createNodesFromCollection = async (
       },
     };
 
-    // Add the slug
-    // @ts-ignore
-    node.slug = config.makeSlug(node);
+    if (config.makeSlug) {
+      // Add the slug. Maybe I should remove this option since it's a non-idiomatic way to do this.
+      // @ts-ignore
+      node.slug = config.makeSlug(node);
+    }
 
     if (block.content) {
       node.content = block.content.map(({ type, ...rest }) => ({

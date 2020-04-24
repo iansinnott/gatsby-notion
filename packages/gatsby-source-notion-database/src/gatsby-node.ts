@@ -1,12 +1,10 @@
 import { GatsbyNode, SourceNodesArgs } from 'gatsby';
-import { NotionsoPluginOptions, IntermediateForm } from './types';
+import { NotionsoPluginOptions } from './types';
 import createNodesFromCollection from './createNodesFromCollection';
-import { isNotionNode } from './helpers';
 
 const defaultConfig = {
   debug: false,
   downloadLocal: true,
-  makeSlug: (x: IntermediateForm) => x.id,
 };
 
 export const sourceNodes: GatsbyNode['sourceNodes'] = async (
