@@ -180,7 +180,7 @@ const createNodesFromCollection = async (
     // A quick rest before continuing. For something like a blog this
     // probably isn't an issue but for a real table of data who knows how
     // many rows there could be
-    await sleep(1000);
+    await sleep(config.timeout || 1000);
 
     return chunk;
   };
@@ -210,7 +210,7 @@ const createNodesFromCollection = async (
       collectionId: collection.id,
       collectionViewId,
       loader: {
-        limit: 70 * 14,
+        limit: config.limit || 70 * 14,
         loadContentCover: true,
         // @ts-ignore
         searchQuery: '',

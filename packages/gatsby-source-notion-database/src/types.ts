@@ -102,6 +102,8 @@ export type JsonArray = Array<JsonTypes>;
 export interface NotionsoPluginOptions extends PluginOptions {
   databaseViewUrl: string;
   tokenv2?: string;
+  limit?: number; // Limit the number of rows. Mainly for debugging
+  timeout?: number; // How long to wait between requests. Also mainly for debugging
   downloadLocal: boolean;
   debug?: boolean;
   renderers?: { [k: string]: (x: IntermediateForm) => any };
