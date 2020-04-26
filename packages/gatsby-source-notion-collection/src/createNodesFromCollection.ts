@@ -51,10 +51,14 @@ const wrapReporter = (
   reporter: Reporter,
 ): Logger & { panic: (s: string) => any } => {
   return {
-    log: (x: string) => reporter.log(`@iansinnott/gatsby-source-notion-collection ${x}`),
-    info: (x: string) => reporter.info(`@iansinnott/gatsby-source-notion-collection ${x}`),
-    warn: (x: string) => reporter.warn(`@iansinnott/gatsby-source-notion-collection ${x}`),
-    panic: (x: string) => reporter.panic(`@iansinnott/gatsby-source-notion-collection ${x}`),
+    log: (x: string) =>
+      reporter.log(`@iansinnott/gatsby-source-notion-collection ${x}`),
+    info: (x: string) =>
+      reporter.info(`@iansinnott/gatsby-source-notion-collection ${x}`),
+    warn: (x: string) =>
+      reporter.warn(`@iansinnott/gatsby-source-notion-collection ${x}`),
+    panic: (x: string) =>
+      reporter.panic(`@iansinnott/gatsby-source-notion-collection ${x}`),
   };
 };
 
@@ -125,7 +129,7 @@ const createNodesFromCollection = async (
     return;
   }
 
-  const { pageId, collectionViewId } = parsed;
+  const { pageId, collectionViewId, spaceId } = parsed;
 
   reporter.info(
     `Got to the plugin. Will do interesting things with collection ${JSON.stringify(
@@ -146,7 +150,10 @@ const createNodesFromCollection = async (
       refreshedAt = cached.refreshedAt;
     } catch (err) {
       // Do I need to ensure the cache file exists?
-      await context.cache.set('@iansinnott/gatsby-source-notion-collection__INIT', true);
+      await context.cache.set(
+        '@iansinnott/gatsby-source-notion-collection__INIT',
+        true,
+      );
     }
 
     const shouldReload =
@@ -427,6 +434,7 @@ const createNodesFromCollection = async (
         missingContentBlocks,
         blocks,
         collection,
+        schema,
         collectionView,
       };
 
@@ -446,10 +454,23 @@ const createNodesFromCollection = async (
     });
   };
 
-  const { blocks, collection } = await queryCollection({
+  const { blocks, collection, collectionView } = await queryCollection({
     pageId,
     collectionViewId,
   });
+
+  const { schema, ..._collection } = collection;
+  const collectionMeta = {
+    pageId,
+    spaceId,
+    collectionView,
+    collection: _collection,
+    schema: Object.entries(schema).map(([pid, value]) => ({
+      pid,
+      name: value.name,
+      type: value.type,
+    })),
+  };
 
   const collectionName = mapNotionPropertyValue({
     type: 'title',
@@ -532,6 +553,17 @@ const createNodesFromCollection = async (
 
     context.actions.createNode(node);
   }
+
+  context.actions.createNode({
+    ...collectionMeta,
+    id: context.createNodeId(collection.id),
+    internal: {
+      type: NODE_TYPE + 'Meta',
+      contentDigest: context.createContentDigest({
+        data: JSON.stringify(collectionMeta),
+      }),
+    },
+  });
 };
 
 export default createNodesFromCollection;
