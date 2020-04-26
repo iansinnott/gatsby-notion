@@ -10,7 +10,7 @@ export const tap = <T>(fn: (x: T) => void) => (x: T) => {
 };
 export const join = (char: string) => (arr: any[]) => arr.join(char);
 
-export const NOTION_NODE_PREFIX = 'NotionDb';
+export const NOTION_NODE_PREFIX = 'NotionCollection';
 
 export const isNotionNode = (node: any) => {
   return node.internal.type.startsWith(NOTION_NODE_PREFIX);
