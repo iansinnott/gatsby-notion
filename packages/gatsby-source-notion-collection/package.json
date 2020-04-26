@@ -1,6 +1,6 @@
 {
   "name": "@iansinnott/gatsby-source-notion-collection",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Use Notion database views as a Gatsby data source",
   "keywords": [
     "gatsby",
@@ -29,5 +29,5 @@
     "react-dom": "^16.13.1",
     "typescript": "^3.8.3"
   },
-  "gitHead": "cdf473415568f020138cc2f4d84de1bb51d94621"
+  "gitHead": "3ca12c88386b92a3555e09b2e212c2ce27ab283e"
 }
