@@ -13,7 +13,7 @@
   "license": "MIT",
   "main": "index.js",
   "files": [
-    "lib",
+    "lib/*",
     "gatsby-node.js",
     "index.js"
   ],
