@@ -12,12 +12,8 @@
   "homepage": "",
   "license": "MIT",
   "main": "index.js",
-  "files": [
-    "lib/*",
-    "gatsby-node.js",
-    "index.js"
-  ],
   "scripts": {
+    "prepublish": "yarn run build",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "echo \"Error: run tests from root\" && exit 1"
