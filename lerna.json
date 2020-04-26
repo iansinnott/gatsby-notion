@@ -1,4 +1,6 @@
 {
-  "packages": ["packages/gatsby-source-*"],
-  "version": "0.1.2"
+  "packages": [
+    "packages/gatsby-source-*"
+  ],
+  "version": "0.1.3"
 }
