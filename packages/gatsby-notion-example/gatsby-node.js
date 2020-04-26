@@ -1,7 +1,7 @@
 exports.createPages = async function({ actions, graphql }) {
   const { data } = await graphql(`
     query {
-      db: allNotionDbPosts(
+      collection: allNotionCollectionBlogDatabaseExample(
         sort: { fields: properties___created, order: DESC }
       ) {
         nodes {
@@ -11,12 +11,12 @@ exports.createPages = async function({ actions, graphql }) {
       }
     }
   `);
-  data.db.nodes.forEach((node) => {
+  data.collection.nodes.forEach(node => {
     const { slug, id } = node;
     actions.createPage({
       path: slug,
       component: require.resolve(`./src/templates/Page.tsx`),
-      context: { slug, id },
+      context: { slug, id }
     });
   });
 };

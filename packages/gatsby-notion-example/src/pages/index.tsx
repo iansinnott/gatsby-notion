@@ -10,15 +10,18 @@ const IndexPage = () => {
           title
         }
       }
-
-      # NOTE! The query field name is based on your database name
-      database: allNotionDbPosts(
+      collection: allNotionCollectionBlogDatabaseExample(
         sort: { fields: properties___created, order: DESC }
       ) {
         nodes {
           id
           slug
+          content_html
           properties {
+            created
+            published
+            status
+            tags
             title
           }
         }
@@ -34,7 +37,7 @@ const IndexPage = () => {
         site.
       </p>
       <p>Now go build something great.</p>
-      {data.database.nodes.map(node => (
+      {data.collection.nodes.map(node => (
         <div key={node.id}>
           <Link to={`/${node.slug}`}>{node.properties.title}</Link>
         </div>
