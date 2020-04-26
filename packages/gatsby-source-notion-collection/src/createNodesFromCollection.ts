@@ -51,10 +51,10 @@ const wrapReporter = (
   reporter: Reporter,
 ): Logger & { panic: (s: string) => any } => {
   return {
-    log: (x: string) => reporter.log(`gatsby-source-notion-collection ${x}`),
-    info: (x: string) => reporter.info(`gatsby-source-notion-collection ${x}`),
-    warn: (x: string) => reporter.warn(`gatsby-source-notion-collection ${x}`),
-    panic: (x: string) => reporter.panic(`gatsby-source-notion-collection ${x}`),
+    log: (x: string) => reporter.log(`@iansinnott/gatsby-source-notion-collection ${x}`),
+    info: (x: string) => reporter.info(`@iansinnott/gatsby-source-notion-collection ${x}`),
+    warn: (x: string) => reporter.warn(`@iansinnott/gatsby-source-notion-collection ${x}`),
+    panic: (x: string) => reporter.panic(`@iansinnott/gatsby-source-notion-collection ${x}`),
   };
 };
 
@@ -146,7 +146,7 @@ const createNodesFromCollection = async (
       refreshedAt = cached.refreshedAt;
     } catch (err) {
       // Do I need to ensure the cache file exists?
-      await context.cache.set('gatsby-source-notion-collection__INIT', true);
+      await context.cache.set('@iansinnott/gatsby-source-notion-collection__INIT', true);
     }
 
     const shouldReload =

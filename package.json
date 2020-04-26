@@ -1,5 +1,5 @@
 {
-  "name": "gatsby-source-notion-collection",
+  "name": "@iansinnott/gatsby-source-notion-collection",
   "version": "1.0.0",
   "main": "index.js",
   "author": "Ian Sinnott <ian@iansinnott.com>",

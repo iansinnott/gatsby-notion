@@ -17,7 +17,7 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
 
   if (!databaseViewUrl) {
     reporter.panic(
-      'gatsby-source-notion-collection requires a databaseViewUrl parameter. This will be the URL of any view onto your database. It would look something like:\n\thttps://www.notion.so/USER_ACCOUNT_NAME/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?v=yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
+      '@iansinnott/gatsby-source-notion-collection requires a databaseViewUrl parameter. This will be the URL of any view onto your database. It would look something like:\n\thttps://www.notion.so/USER_ACCOUNT_NAME/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx?v=yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
     );
     return;
   }

@@ -2,6 +2,6 @@
 
 const gatsbySourceNotionDatabase = require('..');
 
-describe('gatsby-source-notion-collection', () => {
+describe('@iansinnott/gatsby-source-notion-collection', () => {
     it('needs tests');
 });
