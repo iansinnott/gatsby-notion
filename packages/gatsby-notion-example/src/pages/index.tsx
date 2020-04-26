@@ -1,18 +1,6 @@
-import * as React from 'react';
-import Link from 'gatsby-link';
-import { useStaticQuery, graphql } from 'gatsby';
-
-// Please note that you can use https://github.com/dotansimha/graphql-code-generator
-// to generate all types from graphQL schema
-// interface IndexPageProps {
-//   data: {
-//     site: {
-//       siteMetadata: {
-//         title: string;
-//       };
-//     };
-//   };
-// }
+import * as React from "react";
+import Link from "gatsby-link";
+import { useStaticQuery, graphql } from "gatsby";
 
 const IndexPage = () => {
   const data = useStaticQuery(graphql`
@@ -32,10 +20,6 @@ const IndexPage = () => {
           slug
           properties {
             title
-            created
-            # published
-            status
-            tags
           }
         }
       }
@@ -46,11 +30,11 @@ const IndexPage = () => {
     <div>
       <h1>Hi people</h1>
       <p>
-        Welcome to your new <strong>{data.site.siteMetadata.title}</strong>{' '}
+        Welcome to your new <strong>{data.site.siteMetadata.title}</strong>{" "}
         site.
       </p>
       <p>Now go build something great.</p>
-      {data.database.nodes.map((node) => (
+      {data.database.nodes.map(node => (
         <div key={node.id}>
           <Link to={`/${node.slug}`}>{node.properties.title}</Link>
         </div>
