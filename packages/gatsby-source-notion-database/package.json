@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-notion-database",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Use Notion database views as a Gatsby data source",
   "keywords": [
     "gatsby",
