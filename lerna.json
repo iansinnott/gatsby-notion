@@ -1,6 +1,6 @@
 {
   "packages": [
-    "packages/gatsby-source-notion-database"
+    "packages/gatsby-source-notion-collection"
   ],
   "version": "0.1.2"
 }

@@ -1,11 +1,11 @@
-# `gatsby-source-notion-database`
+# `gatsby-source-notion-collection`
 
 > TODO: description
 
 ## Usage
 
 ```
-const gatsbySourceNotionDatabase = require('gatsby-source-notion-database');
+const gatsbySourceNotionDatabase = require('gatsby-source-notion-collection');
 
 // TODO: DEMONSTRATE API
 ```
