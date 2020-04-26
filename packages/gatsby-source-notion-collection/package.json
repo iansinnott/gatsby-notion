@@ -12,6 +12,11 @@
   "homepage": "",
   "license": "MIT",
   "main": "index.js",
+  "files": [
+    "lib/*",
+    "gatsby-node.js",
+    "index.js"
+  ],
   "scripts": {
     "prepublish": "yarn run build",
     "build": "tsc",
@@ -27,5 +32,5 @@
     "react-dom": "^16.13.1",
     "typescript": "^3.8.3"
   },
-  "gitHead": "bfacbcb518a91624aa145f6603297084b4d4f187"
+  "gitHead": "1803b446664c158fbe7c5f55036a97ecc1adc7f1"
 }
