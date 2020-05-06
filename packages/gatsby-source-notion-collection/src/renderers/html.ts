@@ -26,6 +26,7 @@ const renderToHtml = () => (x: IntermediateForm) => {
     };
 
     y.props.attributes.forEach((z) => {
+      if (z.type === 'h') spec.props.class.push(z.meta);
       if (z.type === 'i') spec.props.class.push('italic');
       if (z.type === 'b') spec.props.class.push('bold');
       if (z.type === 'a') {
@@ -78,10 +79,15 @@ const renderToHtml = () => (x: IntermediateForm) => {
       case 'divider':
         return `<hr />`; // Any need for children here?
       case 'toggle': {
+        const id = `toggle-${String(Math.random()).split('.')[1]}`;
         const children = child.children.map(buildHtml);
         let [first, ...rest] = children;
-        first = `<div class="toggle-title">${first}</div>`;
-        return `<div class="${child.type}">${[first, ...rest].join('')}</div>`;
+        const childString = [
+          `<input id=${id} type="checkbox" />`,
+          `<label for=${id} class="toggle-title">${first}</label>`,
+          `<div class="toggle-body">${rest.join('')}</div>`,
+        ].join('');
+        return `<div class="${child.type}">${childString}</div>`;
       }
       case 'callout':
         return `<div class="${child.type}">${child.children

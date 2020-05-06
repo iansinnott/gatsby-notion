@@ -1,6 +1,7 @@
-import * as React from "react";
-import { graphql } from "gatsby";
-import Layout from "../layouts";
+import * as React from 'react';
+import { graphql } from 'gatsby';
+import Layout from '../layouts';
+import '../layouts/notion.css';
 
 const styles = `
   pre {
