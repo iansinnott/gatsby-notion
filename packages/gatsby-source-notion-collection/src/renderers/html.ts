@@ -80,12 +80,28 @@ const renderToHtml = () => (x: IntermediateForm) => {
         return `<hr />`; // Any need for children here?
       case 'toggle': {
         const id = `toggle-${String(Math.random()).split('.')[1]}`;
-        const children = child.children.map(buildHtml);
-        let [first, ...rest] = children;
+        let children = child.children.slice();
+        let toggleTitle = [];
+
+        // Since you can inline-format elements of the title of a toggle, we
+        // can't just take the first child and call it a day. We need to
+        // "takeWhile" the type of child is inline
+        let next = children.shift();
+        while (next.type === 'inline') {
+          toggleTitle.push(next);
+          next = children.shift();
+        }
+
+        toggleTitle = toggleTitle.map(buildHtml);
+        children = children.map(buildHtml);
+
+        debugger;
         const childString = [
           `<input id=${id} type="checkbox" />`,
-          `<label for=${id} class="toggle-title">${first}</label>`,
-          `<div class="toggle-body">${rest.join('')}</div>`,
+          `<label for=${id} class="toggle-title">${toggleTitle.join(
+            '',
+          )}</label>`,
+          `<div class="toggle-body">${children.join('')}</div>`,
         ].join('');
         return `<div class="${child.type}">${childString}</div>`;
       }
