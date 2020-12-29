@@ -118,10 +118,10 @@ const renderToHtml = () => (x: IntermediateForm) => {
         //                   &userId=${context.last_edited_by_id}
         const src = child.props.src + "?" + qs.encode({ table: "block", id: context.copied_from });
         return !alt
-          ? `<img src="${child.props.src}" />`
+          ? `<img src="${src}" />`
           : join("")([
               `<figure>`,
-              `<img src="${child.props.src}" alt="${alt}"/>`,
+              `<img src="${src}" alt="${alt}"/>`,
               `<figcaption>${figcaption}</figcaption>`,
               `</figure>`,
             ]);
